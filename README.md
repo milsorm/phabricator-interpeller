@@ -2,11 +2,11 @@
 
 Phabricator application for displaying dependency graph between Maniphest tasks.
 
-(c) 2015 Copyright Milan Sorm <sorm@is4u.cz>
+(c) 2015 Copyright Milan Sorm (sorm@is4u.cz)
 
 ## Synopsis
 
-Application is created as new libph library which can be used as extension for Phabricator <www.phabricator.org>.
+Application is created as new libph library which can be used as extension for Phabricator (www.phabricator.org).
 All codes are already liberated through Arcanist so everything necessary for usage for Phabricator is at place.
 
 ## Installation
