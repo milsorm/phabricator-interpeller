@@ -51,7 +51,7 @@ through two different settings:
 
 First one define internal alias (we use /ours-js folder) for full path two installed JavaScript library. Second one
 only exclude the whole folder /ours-js from all rewriting of Phabricator web space. You can run Phabricator on HTTP
-or HTTPS protocol, it doesn't matter (internal links goes to //localhost).
+or HTTPS protocol, it doesn't matter (internal links goes to `//hostname`).
 
 ## Acknowledgements
 
