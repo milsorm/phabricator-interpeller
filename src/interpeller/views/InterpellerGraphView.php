@@ -7,6 +7,11 @@ final class InterpellerGraphView extends AphrontView {
 	private $viewer = NULL;
 	private $handles = array();
 	private $queries = NULL;
+	private $uri = NULL;
+
+	public function setURI ( $uri ) {
+		$this->uri = '//' . $uri . '/ours-js/d3.v3.min.js';
+	}
 
 	public function setHeader ( $header ) {
 		$this->header = $header;
@@ -299,7 +304,7 @@ EOT;
 
 		$box = id( new PHUIBoxView() )
 			->appendChild( phutil_tag( 'div', array( "class" => "is4u_graph" ), '' ) )
-			->appendChild( phutil_tag( 'script', array( 'src' => '//jalovec.ad.is4u.cz:8888/ours-js/d3.v3.min.js' ) ) )
+			->appendChild( phutil_tag( 'script', array( 'src' => $this->uri ) ) )
 			->appendChild( $box_content )
 			->appendChild( 
 				phutil_tag( 'div', array(),

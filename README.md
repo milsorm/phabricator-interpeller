@@ -53,16 +53,6 @@ First one define internal alias (we use /ours-js folder) for full path two insta
 only exclude the whole folder /ours-js from all rewriting of Phabricator web space. You can run Phabricator on HTTP
 or HTTPS protocol, it doesn't matter (internal links goes to //localhost).
 
-## Silly hostname configuration
-
-There is still absolute hostname in src/interpeller/views/InterpellerGraphView.php (I plan to solve it to some autodiscovery)
-so please change the path to d3.v3.min.js library at line with:
-
-	->appendChild( phutil_tag( 'script', array( 'src' => '//jalovec.ad.is4u.cz:8888/ours-js/d3.v3.min.js' ) ) )
-
-I'm sorry for such complicated configuration but this extension is mainly intended as a demonstration way how to create
-your own Phabricator extensions (after hard study of Phabricator sources because documentation is very poor).
-
 ## Acknowledgements
 
 Thanks to Mike Bostock for excellent D3js library and the whole Phabricator team for such a great tool for organizing development.

@@ -49,6 +49,10 @@ final class InterpellerGraphController extends InterpellerBaseController {
 
 		$graph_panel = new InterpellerGraphView();
 		$graph_panel->setHeader( pht( 'Dependency Graph' ) );
+		if ( array_key_exists( 'HTTP_HOST', $_SERVER ) )
+			$graph_panel->setURI( $_SERVER[ 'HTTP_HOST' ] );
+		else 
+			$graph_panel->setURI( $request->getHost() );
 		$graph_panel->setTasks( $tasks );
 		$graph_panel->setHandles( $handles );
 		$graph_panel->setViewer( $user );
