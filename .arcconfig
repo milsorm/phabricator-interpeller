@@ -1,0 +1,6 @@
+{
+	"project.name": "phabricator-interpeller",
+	"load" : [
+		"../phabricator/src/"
+	]
+}
