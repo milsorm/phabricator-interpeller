@@ -135,7 +135,7 @@ EOT;
 
 		$script_code .= <<<EOT
 	for ( var i = 0; i < links.length; i++ ) {
-		links.source = nodes[ links.source ];  links.target = nodes[ links.target ];
+		links[ i ].source = nodes[ links[ i ].source ];  links[ i ].target = nodes[ links[ i ].target ];
 	}
 
 EOT;
@@ -168,7 +168,105 @@ EOT;
 EOT;
 		}
 
+		if ( in_array( 'redundant_links', $filters ) ) {
+			$script_code .= <<<EOT
+	if ( ! Array.prototype.indexOf ) {
+		Array.prototype.indexOf = function( elt /*, from*/ ) {
+			var len = this.length >>> 0;
+
+			var from = Number(arguments[1]) || 0;
+			from = (from < 0) ? Math.ceil(from) : Math.floor(from);
+			if (from < 0) from += len;
+
+			for (; from < len; from++)
+				if (from in this && this[from] === elt)
+					return from;
+
+			return -1;
+		};
+	}
+
+/* In Phabricator all graphs are already acyclic, we can skip Tarjan algorithm
+	// use Tarjan algorithm to divide the whole graph to strongly connected components
+	var component = 0;
+	var stack = [];
+	var scc = [];
+	for ( var i = 0; i < nodes.length; i++ ) {
+		if ( nodes[ i ].tarjanIndex == null )
+			strongconnect( nodes[ i ] );
+	}
+
+	function strongconnect ( v ) {
+		v.tarjanIndex = component;
+		v.tarjanLowlink = component++;
+		stack.push( v );
+		v.tarjanIsRemoved = false;
+		for ( var j = 0; j < links.length; j++ ) {
+			if ( links[ j ].source == v ) {
+				if ( links[ j ].target.tarjanIndex == null ) {
+					strongconnect( links[ j ].target );
+					v.lowlink = min( v.tarjanLowlink, links[ j ].target.tarjanLowlink );
+				} else if ( ! links[ j ].target.tarjanIsRemoved )
+					v.lowlink = min( v.tarjanLowlink, links[ j ].target.tarjanIndex );
+			}
+		}
+		if ( v.tarjanLowlink == v.tarjanIndex ) {
+			var tarjanN = [];
+			do {
+				var w = stack.pop();
+				w.tarjanIsRemoved = true;
+				tarjanN.push( w );
+			} while ( w != v );
+			scc.push( tarjanN );
+		}
+	} */
+
+	// transitive reduction if acyclic !!!
+	for ( var i = 0; i < links.length; i++ )
+		links[ i ].redundant = false;
+
+	for ( var i = 0; i < nodes.length; i++ )
+		for ( var j = 0; j < links.length; j++ ) {
+			if ( links[ j ].source == nodes[ i ] ) {
+				var connected = bfs( links[ j ].target );
+				if ( connected.length > 0 )
+					for ( var k = 0; k < links.length; k++ )
+						if ( links[ k ].source == nodes[ i ] && connected.indexOf( links[ k ].target ) >= 0 )
+							links[ k ].redundant = true;
+			}
+		}
+
+	function bfs ( v ) {
+		var queue = [];
+		var result = [];
+		queue.push( v );
+		v.bfsMark = true;
+		while ( queue.length > 0 ) {
+			var t = queue.shift();
+			if ( t != v ) result.push( t );
+			for ( var i = 0; i < links.length; i++ ) {
+				if ( links[ i ].source == t )
+					if ( ! links[ i ].target.bfsMark ) {
+						links[ i ].target.bfsMark = true;
+						queue.push( links[ i ].target );
+					}
+			}
+		}
+
+		for ( var i = 0; i < nodes.length; i++ )
+			nodes[ i ].bfsMark = false;
+
+		return result;
+	}
+
+	for ( var i = links.length-1; i >= 0; i-- )
+		if ( links[ i ].redundant ) 
+			links.splice( i, 1 );
+EOT;
+	}
+
 		$script_code .= <<<EOT
+
 	for ( var i = 0; i < nodes.length; i++ ) {
 		labelAnchors.push( { node: nodes[ i ] } );
 		labelAnchors.push( { node: nodes[ i ] } );
@@ -308,7 +406,7 @@ EOT;
 			->appendChild( $box_content )
 			->appendChild( 
 				phutil_tag( 'div', array(),
-					'Links indicate dependency "this task has to be done before that". Blue one tasks are yours. Red ones represent your true blockers while magenta other blocking tasks.' )
+					pht( 'Links indicate dependency "this task has to be done before that". Blue one tasks are yours. Red ones represent your true blockers while magenta other blocking tasks.' ) )
 			 )
 			->addPadding( PHUI::PADDING_LARGE );
 		
@@ -316,12 +414,13 @@ EOT;
 			->setHeader( $this->header );
 		
 		$filter_header = id( new PHUIHeaderView() )
-			->setHeader( 'Filters' );
+			->setHeader( pht( 'Filters' ) );
 
 		$filter_defs = array( 
-			'my_standalone' => 'my standalone tasks',
-			'others_standalone' => 'others standalone tasks',
-			'others_clusters' => 'clusters without my tasks',
+			'my_standalone' => pht( 'my standalone tasks' ),
+			'others_standalone' => pht( 'others standalone tasks' ),
+			'others_clusters' => pht( 'clusters without my tasks' ),
+			'redundant_links' => pht( 'redundant dependencies' ),
 /*			'stack_stucked' => 'tasks from Stucked stack',
 			'stack_wishlist' => 'tasks from Wishlist stack',
 			'stack_backlog' => 'tasks from Backlog stack',

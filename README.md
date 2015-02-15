@@ -56,4 +56,3 @@ or HTTPS protocol, there is no difference (internal links goes to `//hostname`).
 ## Acknowledgements
 
 Thanks to Mike Bostock for excellent D3js library and the whole Phabricator team for such a great tool for organizing development.
-
