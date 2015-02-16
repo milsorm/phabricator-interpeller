@@ -40,11 +40,18 @@ final class InterpellerGraphView extends AphrontView {
 
 		$script_code = <<<EOT
 <script type="text/javascript" charset="utf-8">
-	var w = 1500, h = 900;
+	var wnd    = window,
+	    el     = document.documentElement,
+	    body   = document.getElementsByTagName( 'body' )[ 0 ],
+	    width  = wnd.innerWidth || el.clientWidth  || body.clientWidth,
+	    height = wnd.innerHeight|| el.clientHeight || body.clientHeight;
+
+	height -= 400;  width -= 80;
+	if ( width < 800 ) width = 800;
+	if ( height < 600 ) height = 600;
 
 	var labelDistance = 0;
-
-	var vis = d3.select( "div.is4u_graph" ).append( "svg:svg" ).attr( "width", w).attr( "height", h );
+	var vis = d3.select( "div.is4u_graph" ).append( "svg:svg" ).attr( "width", width ).attr( "height", height );
 
 	var nodes = [];
 	var labelAnchors = [];
@@ -139,21 +146,16 @@ EOT;
 		links[ i ].source.adjacentNodes.push( links[ i ].target );  links[ i ].source.adjacentLinks.push( links[ i ] );
 	}
 
-	if ( ! Array.prototype.indexOf ) {
+	if ( ! Array.prototype.indexOf )
 		Array.prototype.indexOf = function( elt /*, from*/ ) {
 			var len = this.length >>> 0;
-
 			var from = Number(arguments[1]) || 0;
 			from = (from < 0) ? Math.ceil(from) : Math.floor(from);
 			if (from < 0) from += len;
 
-			for (; from < len; from++)
-				if (from in this && this[from] === elt)
-					return from;
-
+			for (; from < len; from++) if (from in this && this[from] === elt) return from;
 			return -1;
 		};
-	}
 
 	function bfs ( v ) {
 		var queue = [];
@@ -218,23 +220,23 @@ EOT;
 	for ( var i = 0; i < nodes.length; i++ ) { labelAnchorLinks.push( { source: i * 2, target: i * 2 + 1, weight: 1 } ); }
 
 	var force = d3.layout.force()
-		.size([w, h])
-		.nodes(nodes)
-		.links(links)
-		.gravity(1)
-		.linkDistance(50)
-		.charge(-3000)
-		.linkStrength(function(x) { return x.weight * 10 });
+		.size( [ width, height ] )
+		.nodes( nodes )
+		.links( links )
+		.gravity( 1 )
+		.linkDistance( 50 )
+		.charge( -3000 )
+		.linkStrength( function ( x ) { return x.weight * 10 } );
 	force.start();
 
 	var force2 = d3.layout.force()
-		.nodes(labelAnchors)
-		.links(labelAnchorLinks)
-		.gravity(0)
-		.linkDistance(0)
-		.linkStrength(8)
-		.charge(-100)
-		.size([w, h]);
+		.nodes( labelAnchors )
+		.links( labelAnchorLinks )
+		.gravity( 0 )
+		.linkDistance( 0 )
+		.linkStrength( 8 )
+		.charge( -100 )
+		.size( [ width, height ] );
 	force2.start();
 
 	vis.append( "svg:defs" )
