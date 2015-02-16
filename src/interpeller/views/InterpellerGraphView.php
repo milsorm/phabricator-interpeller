@@ -81,7 +81,7 @@ EOT;
 					$tasks[ $phid ][ "is_target" ] = 1;
 					$tasks[ $depend ][ "is_source" ] = 1;
 					$script_code .= <<<EOT
-		links.push( { source: $source, target: $target, weight: 0.2 } );
+		links.push( { source: $source, target: $target } );
 
 EOT;
 				}
@@ -90,6 +90,7 @@ EOT;
 
 		$response = CelerityAPI::getStaticResourceResponse();
 
+		$maxHours = 0;
 		foreach ( $this->tasks as $task ) {
 			$phid = $task->getPHID();
 
@@ -122,6 +123,10 @@ EOT;
 			if ( $progress < 0 ) $progress = 0;
 			if ( $progress > 100 ) $progress = 100;
 
+			$estimatedHours = $myFields[ 'std:maniphest:is4u:estimated-hours' ];
+			if ( $estimatedHours < 1 ) $estimatedHours = 1;
+			if ( $estimatedHours > $maxHours ) $maxHours = $estimatedHours;
+
 			$myTask = $task->getOwnerPHID() == $this->viewer->getPHID();
 			$blocker = $tasks[ $phid ][ "is_source" ] && ! $tasks[ $phid ][ "is_target" ];
 			$myBlocker = $myTask && $blocker;
@@ -141,7 +146,7 @@ EOT;
 				$show = 0;
 
 			$script_code .= <<<EOT
-	var node = { label: "$label", title: "$title", color: "$color", meta: "$meta_id", show: "$show", my: "$myTask", adjacentNodes: [], adjacentLinks: [], progress: $progress };
+	var node = { label: "$label", title: "$title", color: "$color", meta: "$meta_id", show: "$show", my: "$myTask", adjacentNodes: [], adjacentLinks: [], progress: $progress, estimatedHours: $estimatedHours };
 	nodes.push( node );
 
 EOT;
@@ -224,16 +229,16 @@ EOT;
 		labelAnchors.push( { node: nodes[ i ] } );
 	}
 
-	for ( var i = 0; i < nodes.length; i++ ) { labelAnchorLinks.push( { source: i * 2, target: i * 2 + 1, weight: 1 } ); }
+	for ( var i = 0; i < nodes.length; i++ ) { labelAnchorLinks.push( { source: i * 2, target: i * 2 + 1 } ); }
 
 	var force = d3.layout.force()
 		.size( [ width, height ] )
 		.nodes( nodes )
 		.links( links )
 		.gravity( 1 )
-		.linkDistance( 50 )
+		.linkDistance( 20 )
 		.charge( -3000 )
-		.linkStrength( function ( x ) { return x.weight * 10 } );
+		.linkStrength( 2 )
 	force.start();
 
 	var force2 = d3.layout.force()
