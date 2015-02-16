@@ -106,14 +106,21 @@ EOT;
 				$fvalue = $field->getProxy()->getFieldValue();
 				$myFields[ $fname ] = $fvalue;
 			}
-			if ( !isset( $myFields[ 'std:maniphest:is4u:estimated-hours' ]) )
+			if ( ! array_key_exists( 'std:maniphest:is4u:estimated-hours', $myFields ) || !isset( $myFields[ 'std:maniphest:is4u:estimated-hours' ]) )
 				$myFields[ 'std:maniphest:is4u:estimated-hours' ] = 1;
-			if ( !isset( $myFields[ 'std:maniphest:is4u:progress' ]) )
+			if ( ! array_key_exists( 'std:maniphest:is4u:progress', $myFields ) || !isset( $myFields[ 'std:maniphest:is4u:progress' ]) )
 				$myFields[ 'std:maniphest:is4u:progress' ] = 0;
 
-			$title .= sprintf( " (%s, %d hours, %d %% progress)",
-				 $owner->getName(), $myFields[ 'std:maniphest:is4u:estimated-hours' ], $myFields[ 'std:maniphest:is4u:progress' ] );
+			if ( array_key_exists( 'std:maniphest:is4u:estimated-hours', $myFields ) && array_key_exists( 'std:maniphest:is4u:progress', $myFields ) )
+				$title .= sprintf( " (%s, %d hours, %d %% progress)",
+					 $owner->getName(), $myFields[ 'std:maniphest:is4u:estimated-hours' ], $myFields[ 'std:maniphest:is4u:progress' ] );
+			else
+				$title .= sprintf( " (%s)", $owner->getName() );
 			$title = phutil_escape_html( $title );
+
+			$progress = $myFields[ 'std:maniphest:is4u:progress' ];
+			if ( $progress < 0 ) $progress = 0;
+			if ( $progress > 100 ) $progress = 100;
 
 			$myTask = $task->getOwnerPHID() == $this->viewer->getPHID();
 			$blocker = $tasks[ $phid ][ "is_source" ] && ! $tasks[ $phid ][ "is_target" ];
@@ -134,7 +141,7 @@ EOT;
 				$show = 0;
 
 			$script_code .= <<<EOT
-	var node = { label: "$label", title: "$title", color: "$color", meta: "$meta_id", show: "$show", my: "$myTask", adjacentNodes: [], adjacentLinks: [] };
+	var node = { label: "$label", title: "$title", color: "$color", meta: "$meta_id", show: "$show", my: "$myTask", adjacentNodes: [], adjacentLinks: [], progress: $progress };
 	nodes.push( node );
 
 EOT;
