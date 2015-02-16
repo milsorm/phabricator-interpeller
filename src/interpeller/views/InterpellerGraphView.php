@@ -127,7 +127,7 @@ EOT;
 				$show = 0;
 
 			$script_code .= <<<EOT
-	var node = { label: "$label", title: "$title", color: "$color", meta: "$meta_id", show: "$show", my: "$myTask", adjacents: [] };
+	var node = { label: "$label", title: "$title", color: "$color", meta: "$meta_id", show: "$show", my: "$myTask", adjacentNodes: [], adjacentLinks: [] };
 	nodes.push( node );
 
 EOT;
@@ -136,41 +136,9 @@ EOT;
 		$script_code .= <<<EOT
 	for ( var i = 0; i < links.length; i++ ) {
 		links[ i ].source = nodes[ links[ i ].source ];  links[ i ].target = nodes[ links[ i ].target ];
-		links[ i ].source.adjacents.push( links[ i ].target );
+		links[ i ].source.adjacentNodes.push( links[ i ].target );  links[ i ].source.adjacentLinks.push( links[ i ] );
 	}
 
-EOT;
-
-		if ( in_array( 'others_clusters', $filters ) ) {
-			$script_code .= <<<EOT
-	for (var i = 0; i < nodes.length; i++ ) {
-		nodes[ i ].keep = nodes[ i ].my == "1";
-	}
-
-	stop = false;
-	while ( stop ) {
-		stop = true;
-		for ( var i = 0; i < links.length; i++ ) {
-			if ( links[ i ].source.keep && ! links[ i ].target.keep ) {
-				links[ i ].target.keep = true;
-				stop = false;
-			}
-			if ( links[ i ].target.keep && ! links[ i ].source.keep ) {
-				links[ i ].source.keep = true;
-				stop = false;
-			}
-		}
-	}
-
-	for ( var i = 0; i < nodes.length; i++ )
-		if ( ! nodes[ i ].keep )
-			nodes[ i ].show = "0";
-
-EOT;
-		}
-
-		if ( in_array( 'redundant_links', $filters ) ) {
-			$script_code .= <<<EOT
 	if ( ! Array.prototype.indexOf ) {
 		Array.prototype.indexOf = function( elt /*, from*/ ) {
 			var len = this.length >>> 0;
@@ -187,54 +155,6 @@ EOT;
 		};
 	}
 
-/* In Phabricator all graphs are already acyclic, we can skip Tarjan algorithm
-	// use Tarjan algorithm to divide the whole graph to strongly connected components
-	var component = 0;
-	var stack = [];
-	var scc = [];
-	for ( var i = 0; i < nodes.length; i++ ) {
-		if ( nodes[ i ].tarjanIndex == null )
-			strongconnect( nodes[ i ] );
-	}
-
-	function strongconnect ( v ) {
-		v.tarjanIndex = component;
-		v.tarjanLowlink = component++;
-		stack.push( v );
-		v.tarjanIsRemoved = false;
-		for ( var j = 0; j < links.length; j++ ) {
-			if ( links[ j ].source == v ) {
-				if ( links[ j ].target.tarjanIndex == null ) {
-					strongconnect( links[ j ].target );
-					v.lowlink = min( v.tarjanLowlink, links[ j ].target.tarjanLowlink );
-				} else if ( ! links[ j ].target.tarjanIsRemoved )
-					v.lowlink = min( v.tarjanLowlink, links[ j ].target.tarjanIndex );
-			}
-		}
-		if ( v.tarjanLowlink == v.tarjanIndex ) {
-			var tarjanN = [];
-			do {
-				var w = stack.pop();
-				w.tarjanIsRemoved = true;
-				tarjanN.push( w );
-			} while ( w != v );
-			scc.push( tarjanN );
-		}
-	} */
-
-	// transitive reduction if acyclic !!!
-	for ( var i = 0; i < links.length; i++ )
-		links[ i ].redundant = false;
-
-	for ( var i = 0; i < nodes.length; i++ )
-		for ( var j = 0; j < nodes[ i ].adjacents.length; j++ ) {
-			var connected = bfs( nodes[ i ].adjacents[ j ] );
-			if ( connected.length > 0 )
-				for ( var k = 0; k < links.length; k++ )
-					if ( links[ k ].source == nodes[ i ] && connected.indexOf( links[ k ].target ) >= 0 )
-						links[ k ].redundant = true;
-		}
-
 	function bfs ( v ) {
 		var queue = [];
 		var result = [];
@@ -243,24 +163,48 @@ EOT;
 		while ( queue.length > 0 ) {
 			var t = queue.shift();
 			if ( t != v ) result.push( t );
-			for ( var i = 0; i < links.length; i++ ) {
-				if ( links[ i ].source == t )
-					if ( ! links[ i ].target.bfsMark ) {
-						links[ i ].target.bfsMark = true;
-						queue.push( links[ i ].target );
-					}
-			}
+			for ( var i = 0; i < t.adjacentNodes.length; i++ )
+				if ( ! t.adjacentNodes[ i ].bfsMark ) {
+					t.adjacentNodes[ i ].bfsMark = true;
+					queue.push( t.adjacentNodes[ i ] );
+				}
 		}
 
-		for ( var i = 0; i < nodes.length; i++ )
-			nodes[ i ].bfsMark = false;
-
+		for ( var i = 0; i < nodes.length; i++ ) nodes[ i ].bfsMark = false;
 		return result;
 	}
 
-	for ( var i = links.length-1; i >= 0; i-- )
-		if ( links[ i ].redundant ) 
-			links.splice( i, 1 );
+EOT;
+
+		if ( in_array( 'others_clusters', $filters ) ) {
+			$script_code .= <<<EOT
+	for (var i = 0; i < nodes.length; i++ )
+		if ( nodes[ i ].my == "1" ) {
+			nodes[ i ].keep = true;
+			var connected = bfs( nodes[ i ] );
+			for ( var j = 0; j < connected.length; j++ )
+				connected[ j ].keep = true;
+		}
+
+	for ( var i = 0; i < nodes.length; i++ ) if ( ! nodes[ i ].keep ) nodes[ i ].show = "0";
+
+EOT;
+		}
+
+		if ( in_array( 'redundant_links', $filters ) ) {
+			$script_code .= <<<EOT
+	for ( var i = 0; i < links.length; i++ ) links[ i ].redundant = false;
+
+	for ( var i = 0; i < nodes.length; i++ )
+		for ( var j = 0; j < nodes[ i ].adjacentNodes.length; j++ ) {
+			var connected = bfs( nodes[ i ].adjacentNodes[ j ] );
+			if ( connected.length > 0 )
+				for ( var k = 0; k < nodes[ i ].adjacentLinks.length; k++ )
+					if ( connected.indexOf( nodes[ i ].adjacentLinks[ k ].target ) >= 0 )
+						nodes[ i ].adjacentLinks[ k ].redundant = true;
+		}
+
+	for ( var i = links.length-1; i >= 0; i-- ) if ( links[ i ].redundant ) links.splice( i, 1 );
 EOT;
 	}
 
