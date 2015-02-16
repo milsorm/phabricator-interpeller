@@ -127,7 +127,7 @@ EOT;
 				$show = 0;
 
 			$script_code .= <<<EOT
-	var node = { label: "$label", title: "$title", color: "$color", meta: "$meta_id", show: "$show", my: "$myTask" };
+	var node = { label: "$label", title: "$title", color: "$color", meta: "$meta_id", show: "$show", my: "$myTask", adjacents: [] };
 	nodes.push( node );
 
 EOT;
@@ -136,6 +136,7 @@ EOT;
 		$script_code .= <<<EOT
 	for ( var i = 0; i < links.length; i++ ) {
 		links[ i ].source = nodes[ links[ i ].source ];  links[ i ].target = nodes[ links[ i ].target ];
+		links[ i ].source.adjacents.push( links[ i ].target );
 	}
 
 EOT;
@@ -226,14 +227,12 @@ EOT;
 		links[ i ].redundant = false;
 
 	for ( var i = 0; i < nodes.length; i++ )
-		for ( var j = 0; j < links.length; j++ ) {
-			if ( links[ j ].source == nodes[ i ] ) {
-				var connected = bfs( links[ j ].target );
-				if ( connected.length > 0 )
-					for ( var k = 0; k < links.length; k++ )
-						if ( links[ k ].source == nodes[ i ] && connected.indexOf( links[ k ].target ) >= 0 )
-							links[ k ].redundant = true;
-			}
+		for ( var j = 0; j < nodes[ i ].adjacents.length; j++ ) {
+			var connected = bfs( nodes[ i ].adjacents[ j ] );
+			if ( connected.length > 0 )
+				for ( var k = 0; k < links.length; k++ )
+					if ( links[ k ].source == nodes[ i ] && connected.indexOf( links[ k ].target ) >= 0 )
+						links[ k ].redundant = true;
 		}
 
 	function bfs ( v ) {
