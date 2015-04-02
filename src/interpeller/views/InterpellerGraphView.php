@@ -101,6 +101,8 @@ EOT;
 			# add progress and estimated hours to hovered title
 			$field_list = PhabricatorCustomField::getObjectFields( $task, PhabricatorCustomField::ROLE_VIEW );
 			$field_list->setViewer( $this->viewer )->readFieldsFromStorage( $task );
+
+			$myFields = [];
 			foreach ( $field_list->getFields() as $key => $field ) {
 				$field->setViewer( $this->viewer );
 				$fname = $field->getFieldKey();
@@ -119,13 +121,19 @@ EOT;
 				$title .= sprintf( " (%s)", $owner->getName() );
 			$title = phutil_escape_html( $title );
 
-			$progress = $myFields[ 'std:maniphest:is4u:progress' ];
-			if ( $progress < 0 ) $progress = 0;
-			if ( $progress > 100 ) $progress = 100;
+			$progress = 0;
+			if ( array_key_exists( 'std:maniphest:is4u:progress', $myFields ) ) {
+				$progress = $myFields[ 'std:maniphest:is4u:progress' ];
+				if ( $progress < 0 ) $progress = 0;
+				if ( $progress > 100 ) $progress = 100;
+			}
 
-			$estimatedHours = $myFields[ 'std:maniphest:is4u:estimated-hours' ];
-			if ( $estimatedHours < 1 ) $estimatedHours = 1;
-			if ( $estimatedHours > $maxHours ) $maxHours = $estimatedHours;
+			$estimatedHours = 0;
+			if ( array_key_exists( 'std:maniphest:is4u:estimated-hours', $myFields ) ) {
+				$estimatedHours = $myFields[ 'std:maniphest:is4u:estimated-hours' ];
+				if ( $estimatedHours < 1 ) $estimatedHours = 1;
+				if ( $estimatedHours > $maxHours ) $maxHours = $estimatedHours;
+			}
 
 			$myTask = $task->getOwnerPHID() == $this->viewer->getPHID();
 			$blocker = $tasks[ $phid ][ "is_source" ] && ! $tasks[ $phid ][ "is_target" ];
