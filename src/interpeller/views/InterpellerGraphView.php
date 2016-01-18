@@ -166,6 +166,7 @@ EOT;
 	for ( var i = 0; i < links.length; i++ ) {
 		links[ i ].source = nodes[ links[ i ].source ];  links[ i ].target = nodes[ links[ i ].target ];
 		links[ i ].source.adjacentNodes.push( links[ i ].target );  links[ i ].source.adjacentLinks.push( links[ i ] );
+		links[ i ].target.adjacentNodes.push( links[ i ].source );  links[ i ].target.adjacentLinks.push( links[ i ] );
 	}
 
 	if ( ! Array.prototype.indexOf )
@@ -233,6 +234,7 @@ EOT;
 	}
 
 		$script_code .= <<<EOT
+	links = links.filter( function ( d ) { return d.source.show == "1" && d.target.show == "1"; } )
 
 	for ( var i = 0; i < nodes.length; i++ ) {
 		labelAnchors.push( { node: nodes[ i ] } );
@@ -282,12 +284,9 @@ EOT;
 			.style("stroke", "#999")
 			.attr( "marker-end", "url(#triangle)" );
 
-	var new_links = force.links().filter( function ( d ) { return d.source.show == "1" && d.target.show == "1"; } )
-	if ( new_links.length == 0 ) {
-		force.links( [] );
+	if ( links.length == 0 ) {
 		d3.selectAll("line.link").remove();
-	} else
-		force.links( new_links );
+	}
 	force.nodes( force.nodes().filter( function ( d ) { return d.show == "1"; } ) );
 	force2.nodes( force2.nodes().filter( function ( d ) { return d.node.show == "1"; } ) );
 
