@@ -106,8 +106,10 @@ EOT;
 			foreach ( $field_list->getFields() as $key => $field ) {
 				$field->setViewer( $this->viewer );
 				$fname = $field->getFieldKey();
-				$fvalue = $field->getProxy()->getFieldValue();
-				$myFields[ $fname ] = $fvalue;
+				$fproxy = $field->getProxy();
+				if ($fproxy != null) {
+					$myFields[ $fname ] = $fproxy->getFieldValue();
+				}
 			}
 			if ( ! array_key_exists( 'std:maniphest:is4u:estimated-hours', $myFields ) || !isset( $myFields[ 'std:maniphest:is4u:estimated-hours' ]) )
 				$myFields[ 'std:maniphest:is4u:estimated-hours' ] = 1;
