@@ -63,7 +63,7 @@ EOT;
 		$counter = 0;
 		$tasks = array();
 
-		Javelin::initBehavior('phabricator-hovercards');
+		Javelin::initBehavior('phui-hovercards');
 
 		foreach ( $this->tasks as $task ) {
 			$phid = $task->getPHID();
