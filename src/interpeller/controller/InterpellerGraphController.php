@@ -58,14 +58,9 @@ final class InterpellerGraphController extends InterpellerBaseController {
 		$graph_panel->setViewer( $user );
 		$graph_panel->setQueries( $saved_queries );
 
-		return $this->buildApplicationPage(
-			array(
-				$this->buildApplicationCrumbs(),
-				$graph_panel
-			),
-			array(
-				'title' => pht( 'Interpeller' ),
-			)
-		);
+		$page = $this->newPage();
+		$page->setTitle(pht('Interpeller'));
+		$page->appendChild($graph_panel);
+		return $page->produceAphrontResponse();
 	}
 }
