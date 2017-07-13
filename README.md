@@ -2,7 +2,7 @@
 
 Phabricator application for displaying the dependency graph between Maniphest tasks.
 
-(c) 2015 Copyright Milan Sorm (sorm@is4u.cz)
+(c) 2015-2017 Copyright Milan Sorm (sorm@is4u.cz)
 
 ## Synopsis
 
